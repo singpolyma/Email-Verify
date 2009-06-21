@@ -6,8 +6,17 @@
 <p class="warning">{{ error }}</p>
 {% endif %}
 
+
+{% if unverified_email %}
+<div class="vcard">
+	<img class="photo" alt="Avatar" src="http://www.gravatar.com/avatar/{{ email_md5 }}?d=wavatar" />
+	<p class="fn nickname">{{ nickname }}</p>
+	<p><a class="email" href="mailto:{{ unverified_email }}">{{ unverified_email }}</a></p>
+</div>
+{% endif %}
+
 <p>You can use your email address to log into any site that supports
-<a href="http://openid.net/"><img src="/static/openid-icon.png" />OpenID</a>.</p>
+<img src="/static/openid-icon.png" alt="" /><a href="http://openid.net/">OpenID</a>.</p>
 <p>Just enter
 <span class="url">{{ request_url_without_path }}/id/<span style="font-style:italic;font-weight:bold;">your-email-address</span></a></span> as
 your OpenID.</p>

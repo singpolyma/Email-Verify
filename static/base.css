@@ -25,6 +25,8 @@ body {
 
 h1 {
 	margin-bottom: 2em;
+	font-size: 22pt;
+	font-weight: normal
 }
 
 h1 img {
@@ -47,6 +49,19 @@ p, form {
 	text-align: center;
 }
 
+.vcard {
+	max-width: 25em;
+	margin: auto;
+	margin-bottom: 2em;
+	padding: 1em;
+	border: 1px groove #ccc;
+}
+	.vcard .photo {
+		float: left;
+		background-color: #ccc;
+		padding:0.3em;
+		margin-right:1em;
+	}
 
 /*
  * Links

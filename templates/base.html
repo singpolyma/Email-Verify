@@ -26,7 +26,11 @@
 	{% if user %}
 		{{ user }}
 	{% else %}
-		Email
+		{% if unverified_email %}
+			{{ unverified_email }}
+		{% else %}
+			Email
+		{% endif %}
 	{% endif %}
 </h1>
 {% endblock %}

@@ -45,7 +45,7 @@ from openid.extensions.sreg import SRegResponse
 import store
 
 # Set to True if stack traces should be shown in the browser, etc.
-_DEBUG = False
+_DEBUG = True
 
 # the global openid server instance
 oidserver = None
@@ -244,6 +244,7 @@ class FrontPage(Handler):
   """Show the default OpenID page, with the last 10 logins for this user."""
   def get(self, error=False):
     logins = []
+    unverified_email = False
 
     if self.user:
       query = datastore.Query('Login')
@@ -270,7 +271,10 @@ class Login(Handler):
       return
     elif oidrequest is None:
       # this is a request from a browser
-      self.ShowFrontPage()
+      unverified_email = urllib.unquote(urlparse.urlparse(self.request.uri)[2][4:])
+      email_md5 = hashlib.md5(unverified_email).hexdigest()
+      nickname = unverified_email.rsplit('@',1)[0]
+      self.Render('index', vars())
     elif oidrequest.mode in ['checkid_immediate', 'checkid_setup']:
       if self.HasCookie() and self.CheckUser():
         logging.debug('Has cookie, confirming identity to ' +
