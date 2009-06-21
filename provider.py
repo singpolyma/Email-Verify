@@ -31,7 +31,6 @@ import hashlib
 import random
 import time
 import urllib
-import StringIO
 
 from google.appengine.api import datastore
 from google.appengine.api.datastore_types import Text
