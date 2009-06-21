@@ -55,7 +55,7 @@ def root_url():
   if os.environ.get('SERVER_SOFTWARE','').startswith('Devel'):
     return 'http://localhost:8080/'
   elif os.environ.get('SERVER_SOFTWARE','').startswith('Goog'):
-    return 'http://verify-email.appspot.com/'
+    return 'http://email-verify.appspot.com/'
   else:
     logging.error('Unknown server. Production/development?')
     return 'wtf://error/'
@@ -303,7 +303,7 @@ class Login(Handler):
               v['expires'] = int(time.time())+1800
               v['oidrequest'] = Text(pickle.dumps(self.ArgsToDict()))
               datastore.Put(v)
-              mail.send_mail(sender="Email Verification <openid@singpolyma.net>",
+              mail.send_mail(sender="Email Verification <singpolyma@gmail.com>",
                     to=email,
                     subject="Please verify your email address",
                     body="""
