@@ -45,23 +45,14 @@ from openid.extensions.sreg import SRegResponse
 import store
 
 # Set to True if stack traces should be shown in the browser, etc.
-_DEBUG = True
+_DEBUG = False
 
 # the global openid server instance
 oidserver = None
 
-def root_url():
-  if os.environ.get('SERVER_SOFTWARE','').startswith('Devel'):
-    return 'http://localhost:8080/'
-  elif os.environ.get('SERVER_SOFTWARE','').startswith('Goog'):
-    return 'http://email-verify.appspot.com/'
-  else:
-    logging.error('Unknown server. Production/development?')
-    return 'wtf://error/'
-
 def InitializeOpenId():
   global oidserver
-  oidserver = OpenIDServer.Server(store.DatastoreStore(), root_url())
+  oidserver = OpenIDServer.Server(store.DatastoreStore())
 
 class Handler(webapp.RequestHandler):
   """A base handler class with a couple OpenID-specific utilities."""
@@ -78,8 +69,9 @@ class Handler(webapp.RequestHandler):
       dict with the URL and POST body parameters
     """
     req = self.request
-    d = dict([(arg, req.get(arg)) for arg in req.arguments()])
+    d = {}
     d.update(self.oid_args)
+    d.update(dict([(arg, req.get(arg)) for arg in req.arguments()]))
     return d
 
   def HasCookie(self):
@@ -128,9 +120,10 @@ class Handler(webapp.RequestHandler):
     """
     logging.warning('Respond: oidresponse.request.mode ' + oidresponse.request.mode)
 
-    if sreg_req:
-      sreg_resp = SRegResponse.extractResponse(sreg_req, {'email': self.user, 'nickname': self.user.rsplit('@',1)[0]})
-      oidresponse.addExtension(sreg_resp)
+    if oidresponse.request.mode in ['checkid_immediate', 'checkid_setup']:
+      if sreg_req:
+        sreg_resp = SRegResponse.extractResponse(sreg_req, {'email': self.user, 'nickname': self.user.rsplit('@',1)[0]})
+        oidresponse.addExtension(sreg_resp)
 
     logging.debug('Using response: %s' % oidresponse)
     encoded_response = oidserver.encodeResponse(oidresponse)
@@ -267,6 +260,10 @@ class Login(Handler):
   def get(self):
     """Handles GET requests."""
 
+    parsed = urlparse.urlparse(self.request.uri)
+    request_url_without_path = parsed[0] + '://' + parsed[1]
+    request_url_without_params = request_url_without_path + parsed[2]
+
     oidrequest = self.GetOpenIdRequest()
     if oidrequest is False:
       # there was an error, and GetOpenIdRequest displayed it. bail out.
@@ -280,10 +277,10 @@ class Login(Handler):
                       oidrequest.trust_root)
         self.store_login(oidrequest, 'remembered')
         sreg_req = SRegRequest.fromOpenIDRequest(oidrequest)
-        self.Respond(oidrequest.answer(True, root_url()), sreg_req)
+        self.Respond(oidrequest.answer(True, request_url_without_params), sreg_req)
       elif oidrequest.immediate:
         self.store_login(oidrequest, 'declined')
-        oidresponse = oidrequest.answer(False)
+        oidresponse = oidrequest.answer(False, request_url_without_path)
         self.Respond(oidresponse)
       else:
         if self.CheckUser():
@@ -305,15 +302,13 @@ class Login(Handler):
               mail.send_mail(sender="Email Verification <singpolyma@gmail.com>",
                     to=email,
                     subject="Please verify your email address",
-                    body="""
-You need to verify your email address to continue with your request to <%s>.
+                    body="""You need to verify your email address to continue with your request to <%s>.
 
-To continue, follow this link: <%slogin/%s>
+To continue, follow this link: <%s/login/%s>
 
 or cut and paste the following verification code into the textbox back in your browser:
 
-%s
-""" % (oidrequest.trust_root, root_url(), v['token'], v['token']))
+%s""" % (oidrequest.trust_root, request_url_without_path, v['token'], v['token']))
               self.Render('prompt', vars())
 
     elif oidrequest.mode in ['associate', 'check_authentication']:
@@ -325,16 +320,13 @@ or cut and paste the following verification code into the textbox back in your b
   head = get
   post = get
 
-  def prompt(self):
-    """Ask the user to confirm an OpenID login request."""
-    oidrequest = self.GetOpenIdRequest()
-    if oidrequest:
-      self.response.out.write(page)
-
-
 class FinishLogin(Handler):
   """Handle a POST response to the OpenID login prompt form."""
   def post(self):
+
+    parsed = urlparse.urlparse(self.request.uri)
+    request_url_without_path = parsed[0] + '://' + parsed[1]
+    request_url_without_params = request_url_without_path + parsed[2]
 
     token = self.request.get('token') or urlparse.urlparse(self.request.uri)[2].rsplit('/',2)[2]
     oid_args = False
@@ -377,7 +369,7 @@ class FinishLogin(Handler):
 
       self.store_login(oidrequest, 'confirmed')
       sreg_req = SRegRequest.fromOpenIDRequest(oidrequest)
-      self.Respond(oidrequest.answer(True, root_url()), sreg_req)
+      self.Respond(oidrequest.answer(True, request_url_without_path + '/id/' + urllib.quote(self.user)), sreg_req)
 
     elif args.has_key('no'):
       logging.debug('Login denied, sending cancel to %s' %
