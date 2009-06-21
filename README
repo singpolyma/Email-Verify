@@ -1,5 +1,7 @@
 An email address verification service using OpenID.
 
+This app is quite similar to emailtoid.net
+
 == TODO ==
 
 * Get directed identity working
