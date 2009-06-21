@@ -130,7 +130,7 @@ class Handler(webapp.RequestHandler):
     logging.warning('Respond: oidresponse.request.mode ' + oidresponse.request.mode)
 
     if sreg_req:
-      sreg_resp = SRegResponse.extractResponse(sreg_req, {'email': str(self.user), 'nickname': str(self.user).rsplit('@',1)[0]})
+      sreg_resp = SRegResponse.extractResponse(sreg_req, {'email': self.user, 'nickname': self.user.rsplit('@',1)[0]})
       oidresponse.addExtension(sreg_resp)
 
     logging.debug('Using response: %s' % oidresponse)
