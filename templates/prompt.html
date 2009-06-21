@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block head %}
+{% endblock %}
+
+{% block body %}
+<body>
+<p>
+You must verify your email address to continue with your request to
+<a href="{{ oidrequest.trust_root }}">{{ oidrequest.trust_root }}</a>.
+</p>
+<p>An email with a verification code has been sent to {{ email }}.
+Please check your email, and then paste the code into the box below.</p>
+<form method="post" action="/login">
+<input type="text" name="token" />
+<input type="submit" value="Go" />
+<!-- these are used to recreate the OpenID CheckIDRequest -->
+<input type="hidden" name="openid.mode"
+       value="{{ oidrequest.mode }}" />
+<input type="hidden" name="openid.immediate"
+       value="{{ oidrequest.immediate }}" />
+<input type="hidden" name="openid.identity"
+       value="{{ oidrequest.identity }}" />
+<input type="hidden" name="openid.trust_root"
+       value="{{ oidrequest.trust_root }}" />
+<input type="hidden" name="openid.return_to"
+       value="{{ oidrequest.return_to }}" />
+<input type="hidden" name="openid.assoc_handle"
+       value="{{ oidrequest.assoc_handle }}" />
+<input type="hidden" name="openid.assoc_type"
+       value="{{ oidrequest.assoc_type }}" />
+<p>
+<input type="checkbox" name="remember" value="yes" />
+  Remember for two weeks
+</p>
+</form>
+</body>
+</html>
+{% endblock %}
